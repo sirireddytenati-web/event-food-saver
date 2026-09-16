@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Food Saver</title>
+<style>
+body{font-family:Arial;max-width:600px;margin:20px auto;padding:15px;background:#f5f5f5}
+h1{text-align:center;color:#2e7d32}
+form{background:white;padding:15px;border-radius:8px;margin-bottom:20px}
+input{width:100%;padding:8px;margin:6px 0;box-sizing:border-box}
+button{background:#2e7d32;color:white;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
+button.claim{background:#ff5722;margin-top:8px}
+.card{background:white;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+</style>
+</head>
+<body>
+<h1>🍲 Event Food Saver</h1>
+
+<form id="foodForm">
+<input id="food" placeholder="Food item" required>
+<input id="quantity" placeholder="Quantity" required>
+<input id="address" placeholder="Pickup address" required>
+<input id="phone" placeholder="Phone number" required>
+<button type="submit">Donate Food</button>
+</form>
+
+<h2>Available Food</h2>
+<div id="list">Loading...</div>
+
+<script>
+const API = 'http://localhost:5001/api/foods';
+
+async function loadFoods(){
+  const res = await fetch(API);
+  const foods = await res.json();
+  const list = document.getElementById('list');
+  if(foods.length===0){ list.innerHTML='No food available'; return; }
+  list.innerHTML='';
+  foods.forEach((f,i)=>{
+    const div=document.createElement('div');
+    div.className='card';
+    div.innerHTML=`<b>${f.food}</b> - ${f.quantity}<br>${f.address}<br>📞 ${f.phone}
+    <br><button class="claim" onclick="claimFood(${i})">Claim</button>`;
+    list.appendChild(div);
+  });
+}
+
+async function claimFood(id){
+  await fetch(`${API}/${id}/claim`,{method:'POST'});
+  loadFoods();
+}
+
+document.getElementById('foodForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const data={
+    food:document.getElementById('food').value,
+    quantity:document.getElementById('quantity').value,
+    address:document.getElementById('address').value,
+    phone:document.getElementById('phone').value
+  };
+  await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  e.target.reset();
+  loadFoods();
+});
+
+loadFoods();
+setInterval(loadFoods, 5001);
+</script>
+</body>
+</html>
